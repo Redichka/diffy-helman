@@ -5,24 +5,24 @@ import (
 	"strings"
 )
 
-func generateYouNumber(number int64, g int64, p int64) int64 {
-	a := big.NewInt(number)
-	gBig := big.NewInt(g)
-	pBig := big.NewInt(p)
-	itog := new(big.Int).Exp(gBig, a, pBig)
-	return itog.Int64()
+func generateYouNumber(number int64, g int64, p int64) int64 { // функция для генерации своего числа
+	a := big.NewInt(number)                 // передаем свой секретный номер в функцию для создания эземпляра для работы с библиотекой больших чисел
+	gBig := big.NewInt(g)                   // передаем общее g в функцию для создания эземпляра для работы с библиотекой больших чисел
+	pBig := big.NewInt(p)                   // передаем общее p в функцию для создания эземпляра для работы с библиотекой больших чисел
+	itog := new(big.Int).Exp(gBig, a, pBig) // считаем g в степени a по модулю p
+	return itog.Int64()                     // возвращаем результат в формате int64
 }
 
-func getSecretNumber(myNumber int64, otherNumber int64, p int64) int64 {
-	a := big.NewInt(myNumber)
-	b := big.NewInt(otherNumber)
-	pBig := big.NewInt(p)
-	itog := new(big.Int).Exp(b, a, pBig)
-	return itog.Int64()
+func decryptSecretNumber(myNumber int64, otherNumber int64, p int64) int64 {
+	a := big.NewInt(myNumber)            // передаем свой номер в функцию для создания эземпляра для работы с библиотекой больших чисел
+	b := big.NewInt(otherNumber)         // передаем чужой номер в функцию для создания эземпляра для работы с библиотекой больших чисел
+	pBig := big.NewInt(p)                // передаем общее p в функцию для создания эземпляра для работы с библиотекой больших чисел
+	itog := new(big.Int).Exp(b, a, pBig) // считаем чужой номер в степени своего номера по модулю p
+	return itog.Int64()                  // возвращаем результат в формате int64
 }
 
-func encrypt(text string, shift int64) string {
-	shift = shift % 26
+func encrypt(text string, shift int64) string { // шифрование на шифре цезаря
+	shift = shift % 26 // так как наше число может быть очень большим, делим его на 26(число букв в Англ Алфавите), чтобы работало корректно, шифр существует лишь для примера и далеко не самый эффективный, так как не в нем суть задания
 	if shift == 0 {
 		shift += 2
 	}
@@ -38,7 +38,7 @@ func encrypt(text string, shift int64) string {
 	return encrypted.String()
 }
 
-func decrypt(text string, shift int64) string {
+func decrypt(text string, shift int64) string { // дешифровщик шифра Цезаря, опять же не так важно как само задание по получению одного и того же секретного числа всеми участниками
 	shift = shift % 26
 	if shift == 0 {
 		shift += 2

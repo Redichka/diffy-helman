@@ -7,12 +7,12 @@ import (
 )
 
 func main() {
-	bot, err := tgbotapi.NewBotAPI(pkg.GetToken("config.json"))
+	bot, err := tgbotapi.NewBotAPI(pkg.GetToken("config.json")) // инициализируем бота, передавая файл в котором хранится токен
 	if err != nil {
 		log.Panic(err)
 	}
-	telegramBot := pkg.NewBot(bot)
-	if err := telegramBot.Start(); err != nil {
+	telegramBot := pkg.NewBot(bot)              // создаем экземпляр бота
+	if err := telegramBot.Start(); err != nil { // запускаем бота с помощью метода Start()
 		log.Fatal("Ошибка")
 	}
 }
