@@ -20,6 +20,14 @@ func (b *Bot) handleCommand(message *tgbotapi.Message, updates tgbotapi.UpdatesC
 		if err != nil {
 			return err
 		}
+	case "help":
+		b.help(message)
 	}
 	return nil
+}
+
+func (b *Bot) help(message *tgbotapi.Message) {
+	str := "/help - вывод всех команд\n/register - регистрация в Базе Данных\n/connect - создание чата с другими пользователями\nКоманды внутри соединения:\n/generateYouNumber - генерация твоего открытого ключа\n/decryptSecretNumber - вычисление закрытого ключа\n/encrypt - шифрование Цезарем\n/decrypt - дешифровка Цезаря\n/disconnect - отключение от соединения"
+	msg := tgbotapi.NewMessage(message.Chat.ID, str)
+	b.bot.Send(msg)
 }
