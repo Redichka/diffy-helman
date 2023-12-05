@@ -208,16 +208,20 @@ func (b *Bot) chat(connect *Connect, updates tgbotapi.UpdatesChannel) error {
 			case "encrypt": // шифрование
 				{
 					arguments := strings.Split(update.Message.CommandArguments(), " ") // делим аргументы
-					second2, _ := strconv.ParseInt(arguments[1], 10, 64)               // конвертируем в число полученное значение
-					code := encrypt(arguments[0], second2)                             // передаем значения в функцию для шифрования
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, code)           // высылаем полученный результат
+					second2, _ := strconv.ParseInt(arguments[0], 10, 64)               // конвертируем в число полученное значение
+					arguments = arguments[1:]
+					text := strings.Join(arguments, " ")
+					code := encrypt(text, second2)                           // передаем значения в функцию для шифрования
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, code) // высылаем полученный результат
 					b.bot.Send(msg)
 				}
 			case "decrypt": // дешифровка
 				{
 					arguments := strings.Split(update.Message.CommandArguments(), " ") // делим полученные значения
-					second2, _ := strconv.ParseInt(arguments[1], 10, 64)               // конвертируем в число полученное значение
-					code := decrypt(arguments[0], second2)                             // передаем значеня в функцию для дешифровки
+					second2, _ := strconv.ParseInt(arguments[0], 10, 64)               // конвертируем в число полученное значение
+					arguments = arguments[1:]                                          // удаляем из массива наш ключ
+					text := strings.Join(arguments, " ")                               // соединяем массив в строку
+					code := decrypt(text, second2)                                     // передаем значеня в функцию для дешифровки
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, code)           // высылаем полученный результат
 					b.bot.Send(msg)
 				}
