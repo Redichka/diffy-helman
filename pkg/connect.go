@@ -195,24 +195,14 @@ func (b *Bot) chat(connect *Connect, updates tgbotapi.UpdatesChannel) error {
 					}
 					log.Println(message) // лог для имитации тайного считывания сообщений третьим лицом
 				}
-			case "generateNumber":
+			case "diffyHellmanCalculation":
 				{
 					numbers := strings.Split(update.Message.CommandArguments(), " ") // делим полученные аргументы команды
 					first1, _ := strconv.ParseInt(numbers[0], 10, 64)
 					second2, _ := strconv.ParseInt(numbers[1], 10, 64) // конвертируем их в числа размера 64 байта
 					third3, _ := strconv.ParseInt(numbers[2], 10, 64)
-					code := generateYouNumber(first1, second2, third3)                              // передаем их в функцию для генерации своего уникального номера
+					code := ChetMod(first1, second2, third3)                                        // передаем их в функцию для генерации своего уникального номера
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, strconv.FormatInt(code, 10)) // высылаеем сообщение, конвертируя полученное число в строку
-					b.bot.Send(msg)
-				}
-			case "decryptSecretNumber":
-				{
-					numbers := strings.Split(update.Message.CommandArguments(), " ") // делим полученные аргументы команды
-					first1, _ := strconv.ParseInt(numbers[0], 10, 64)
-					second2, _ := strconv.ParseInt(numbers[1], 10, 64) // конвертируем их в числа размера 64 байта
-					third3, _ := strconv.ParseInt(numbers[2], 10, 64)
-					code := generateYouNumber(first1, second2, third3)                              // передаем их в функцию для дешифрования номеров
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, strconv.FormatInt(code, 10)) /// высылаем сообщения, конвертируя полученное число в строку
 					b.bot.Send(msg)
 				}
 			case "encrypt": // шифрование
