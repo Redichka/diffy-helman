@@ -211,7 +211,7 @@ func (b *Bot) chat(connect *Connect, updates tgbotapi.UpdatesChannel) error {
 					first1, _ := strconv.ParseInt(numbers[0], 10, 64)
 					second2, _ := strconv.ParseInt(numbers[1], 10, 64) // конвертируем их в числа размера 64 байта
 					third3, _ := strconv.ParseInt(numbers[2], 10, 64)
-					code := decryptSecretNumber(first1, second2, third3)                            // передаем их в функцию для дешифрования номеров
+					code := generateYouNumber(first1, second2, third3)                              // передаем их в функцию для дешифрования номеров
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, strconv.FormatInt(code, 10)) /// высылаем сообщения, конвертируя полученное число в строку
 					b.bot.Send(msg)
 				}
