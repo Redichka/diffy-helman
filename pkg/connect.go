@@ -47,7 +47,7 @@ func (b *Bot) register(message *tgbotapi.Message) error {
 	if err != nil {
 		return err
 	}
-	msg := tgbotapi.NewMessage(message.Chat.ID, "Вы успешно зарегестрировались") // сообщаем пользователю об окончании регистрации
+	msg := tgbotapi.NewMessage(message.Chat.ID, "Вы успешно зарегистрировались") // сообщаем пользователю об окончании регистрации
 	b.bot.Send(msg)
 	return nil
 }
@@ -238,6 +238,8 @@ func (b *Bot) chat(connect *Connect, updates tgbotapi.UpdatesChannel) error {
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, randomNumber.String())                  // отправляем полученный результат пользователю
 					b.bot.Send(msg)
 				}
+			case "help":
+				b.help(update.Message)
 			}
 		}
 	}
