@@ -27,17 +27,17 @@ func (b *Bot) Start() error {
 }
 
 func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) error {
-	for update := range updates { // запускаем цикл, который будет работать когда происходит запрос в телеграме
-		if update.CallbackQuery != nil { // проверяем не является ли сообщение нажатием на кнопку
-			continue // так как у нас не предусмотрена логика на такой случай, то просто пропускаем
+	for update := range updates {
+		if update.CallbackQuery != nil {
+			continue
 		}
-		if update.Message.IsCommand() { // проверка на то является ли обновление командой
-			err := b.handleCommand(update.Message, updates) // передаем обновление в обработчик команд
+		if update.Message.IsCommand() {
+			err := b.handleCommand(update.Message, updates)
 			if err != nil {
 				return err
 			}
 		}
-		continue // в случае если это просто сообщение без команды то пропускаем
+		continue
 	}
 	return nil
 }
