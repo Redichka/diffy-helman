@@ -124,7 +124,7 @@ func (b *Bot) connect(message *tgbotapi.Message, updates tgbotapi.UpdatesChannel
 								b.bot.Send(msg3)
 								break // выходим из горутины
 							} else {
-								msg4 := tgbotapi.NewMessage(message.Chat.ID, "В соединении отказано") // если пользователь нажал нет то пишем нашему пользователю что в соединении отказано
+								msg4 := tgbotapi.NewMessage(message.Chat.ID, fmt.Sprintf("В соединении %s отказал", user.Username)) // если пользователь нажал нет то пишем нашему пользователю что в соединении отказано
 								b.bot.Send(msg4)
 								break // выходим из горутины
 							}
@@ -139,11 +139,14 @@ func (b *Bot) connect(message *tgbotapi.Message, updates tgbotapi.UpdatesChannel
 		close(updateChan) // закрываем канал updateChan за ненадобностью
 		cancel()          // закрываем контекст, после чего та горутина выше закончит свою работу и не будет принимать новые обновления
 	}
+	if len(persons) == 1 {
+		return nil, nil
+	}
 	return &Connect{Persons: persons}, nil // возвращаем структуру коннект со всеми пользователями, которых мы подключили, а так же нил, так как тут нет ошибок
 }
 
 func (b *Bot) chat(connect *Connect, updates tgbotapi.UpdatesChannel) error {
-	for update := range updates { // создаем цикл для получения обновлений
+	for update := range updates {
 		if update.CallbackQuery != nil { // игнорируем нажатия на кнопки за ненадобностью
 			continue
 		}
@@ -170,76 +173,92 @@ func (b *Bot) chat(connect *Connect, updates tgbotapi.UpdatesChannel) error {
 				}
 			case "sendpm": // отправка личного сообщения пользователю
 				{
-					commandArguments := strings.Split(update.Message.CommandArguments(), " ") // делим получаемые с командой аргументы
-					username := commandArguments[0]                                           // юзернейм того кому мы хотим отправить сообщение передается первым аргументом
-					commandArguments = commandArguments[1:]                                   // удаляем юзернейм с массива, чтобы осталось только наше сообщение в массиве
-					text := strings.Join(commandArguments, " ")                               // воссоздаем из оставшегося массива текст нашего сообщения
-					message := fmt.Sprintf("[pm]%s : %s", update.Message.Chat.UserName, text) // создаем полный экземпляр нашего сообщения, [pm] у никнейма означает то что сообщение личное
-					for _, person := range connect.Persons {                                  // перебираем всех пользователей
-						if person.Username == username { // находим нужного пользователя
-							msg := tgbotapi.NewMessage(person.TelegramID, message) // отправляем ему наше сообщение
-							b.bot.Send(msg)
+					go func() {
+						commandArguments := strings.Fields(update.Message.CommandArguments())     // делим получаемые с командой аргументы
+						username := commandArguments[0]                                           // юзернейм того кому мы хотим отправить сообщение передается первым аргументом
+						commandArguments = commandArguments[1:]                                   // удаляем юзернейм с массива, чтобы осталось только наше сообщение в массиве
+						text := strings.Join(commandArguments, " ")                               // воссоздаем из оставшегося массива текст нашего сообщения
+						message := fmt.Sprintf("[pm]%s : %s", update.Message.Chat.UserName, text) // создаем полный экземпляр нашего сообщения, [pm] у никнейма означает то что сообщение личное
+						for _, person := range connect.Persons {                                  // перебираем всех пользователей
+							if person.Username == username { // находим нужного пользователя
+								msg := tgbotapi.NewMessage(person.TelegramID, message) // отправляем ему наше сообщение
+								b.bot.Send(msg)
+							}
 						}
-					}
-					log.Println(message) // выводим его в логи для имитации тайного считывания третьим лицом
+						log.Println(message) // выводим его в логи для имитации тайного считывания третьим лицом
+					}()
 				}
 			case "send": // отправка сообщения всем пользователям
 				{
-					message := fmt.Sprintf("%s : %s", update.Message.Chat.UserName, update.Message.CommandArguments()) // создаем экземпляр сообщения
-					for _, person := range connect.Persons {                                                           // пробегаемся по всем пользователям
-						if update.Message.Chat.ID == person.TelegramID { // если это мы то пропускаем
-							continue
+					go func() {
+						message := fmt.Sprintf("%s : %s", update.Message.Chat.UserName, update.Message.CommandArguments()) // создаем экземпляр сообщения
+						for _, person := range connect.Persons {                                                           // пробегаемся по всем пользователям
+							if update.Message.Chat.ID == person.TelegramID { // если это мы то пропускаем
+								continue
+							}
+							msg := tgbotapi.NewMessage(person.TelegramID, message) // остальным отправляем наше сообщение
+							b.bot.Send(msg)
 						}
-						msg := tgbotapi.NewMessage(person.TelegramID, message) // остальным отправляем наше сообщение
-						b.bot.Send(msg)
-					}
-					log.Println(message) // лог для имитации тайного считывания сообщений третьим лицом
+						log.Println(message) // лог для имитации тайного считывания сообщений третьим лицом
+					}()
 				}
 			case "diffyHellmanCalculation":
 				{
-					numbers := strings.Split(update.Message.CommandArguments(), " ") // делим полученные аргументы команды
-					first1, _ := strconv.ParseInt(numbers[0], 10, 64)
-					second2, _ := strconv.ParseInt(numbers[1], 10, 64) // конвертируем их в числа размера 64 байта
-					third3, _ := strconv.ParseInt(numbers[2], 10, 64)
-					code := ChetMod(first1, second2, third3)                                        // передаем их в функцию для генерации своего уникального номера
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, strconv.FormatInt(code, 10)) // высылаеем сообщение, конвертируя полученное число в строку
-					b.bot.Send(msg)
+					go func() {
+						numbers := strings.Fields(update.Message.CommandArguments()) // делим полученные аргументы команды
+						first1, _ := strconv.ParseInt(numbers[0], 10, 64)
+						second2, _ := strconv.ParseInt(numbers[1], 10, 64) // конвертируем их в числа размера 64 байта
+						third3, _ := strconv.ParseInt(numbers[2], 10, 64)
+						code := ChetMod(first1, second2, third3)                                        // передаем их в функцию для генерации своего уникального номера
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, strconv.FormatInt(code, 10)) // высылаеем сообщение, конвертируя полученное число в строку
+						b.bot.Send(msg)
+					}()
 				}
 			case "encrypt": // шифрование
 				{
-					arguments := strings.Split(update.Message.CommandArguments(), " ") // делим аргументы
-					second2, _ := strconv.ParseInt(arguments[1], 10, 64)               // конвертируем в число полученное значение
-					code := encrypt(arguments[0], second2)                             // передаем значения в функцию для шифрования
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, code)           // высылаем полученный результат
-					b.bot.Send(msg)
+					go func() {
+						arguments := strings.Fields(update.Message.CommandArguments()) // делим аргументы
+						second2, _ := strconv.ParseInt(arguments[0], 10, 64)           // конвертируем в число полученное значение
+						arguments = arguments[1:]
+						text := strings.Join(arguments, " ")
+						code := encrypt(text, second2)                           // передаем значения в функцию для шифрования
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, code) // высылаем полученный результат
+						b.bot.Send(msg)
+					}()
 				}
 			case "decrypt": // дешифровка
 				{
-					arguments := strings.Split(update.Message.CommandArguments(), " ") // делим полученные значения
-					second2, _ := strconv.ParseInt(arguments[1], 10, 64)               // конвертируем в число полученное значение
-					code := decrypt(arguments[0], second2)                             // передаем значеня в функцию для дешифровки
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, code)           // высылаем полученный результат
-					b.bot.Send(msg)
+					go func() {
+						arguments := strings.Fields(update.Message.CommandArguments()) // делим полученные значения
+						second2, _ := strconv.ParseInt(arguments[0], 10, 64)           // конвертируем в число полученное значение
+						arguments = arguments[1:]                                      // удаляем из массива наш ключ
+						text := strings.Join(arguments, " ")                           // соединяем массив в строку
+						code := decrypt(text, second2)                                 // передаем значеня в функцию для дешифровки
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, code)       // высылаем полученный результат
+						b.bot.Send(msg)
+					}()
 				}
 			case "generateRandomNumber": // генератор случайного числа
 				{
-					arguments := strings.Split(update.Message.CommandArguments(), " ") // мы передаем 4 аргумента: первое число, степень первого числа, второе число, степень второго числа, делим их
-					numbers := []int{}                                                 // создаем массив для хранения этих чисел
-					for _, num := range arguments {                                    // перебираем все 4 числа и конвертируем в тип интеджер, добавляя в массив
-						number, _ := strconv.Atoi(num)
-						numbers = append(numbers, number)
-					}
-					min := new(big.Int).Exp(big.NewInt(int64(numbers[0])), big.NewInt(int64(numbers[1])), nil) // возводим первое число в степень второго, так как мы работаем с библиотекой больших чисел то переводим int в int64
-					max := new(big.Int).Exp(big.NewInt(int64(numbers[2])), big.NewInt(int64(numbers[3])), nil) // возводим третье число в степень четвертого, так как мы работаем с библиотекой больших чисел то переводим int в int64
-					source := rand.New(rand.NewSource(time.Now().UnixNano()))                                  // задаем источником для генерации чисел нынешнее время в наносекундах
-					diff := new(big.Int).Sub(max, min)                                                         // вычисляем разницу между максимальным и минимальным числом
-					randomDiff := new(big.Int).Rand(source, diff)                                              // генерируем случайное число размером с разницу между мин и макс числами
-					randomNumber := new(big.Int).Add(randomDiff, min)                                          // добавляем к получившемуся числу минимальное, чтобы оно входило в диапозон
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, randomNumber.String())                  // отправляем полученный результат пользователю
-					b.bot.Send(msg)
+					go func() {
+						arguments := strings.Fields(update.Message.CommandArguments()) // мы передаем 4 аргумента: первое число, степень первого числа, второе число, степень второго числа, делим их
+						numbers := []int{}                                             // создаем массив для хранения этих чисел
+						for _, num := range arguments {                                // перебираем все 4 числа и конвертируем в тип интеджер, добавляя в массив
+							number, _ := strconv.Atoi(num)
+							numbers = append(numbers, number)
+						}
+						min := new(big.Int).Exp(big.NewInt(int64(numbers[0])), big.NewInt(int64(numbers[1])), nil) // возводим первое число в степень второго, так как мы работаем с библиотекой больших чисел то переводим int в int64
+						max := new(big.Int).Exp(big.NewInt(int64(numbers[2])), big.NewInt(int64(numbers[3])), nil) // возводим третье число в степень четвертого, так как мы работаем с библиотекой больших чисел то переводим int в int64
+						source := rand.New(rand.NewSource(time.Now().UnixNano()))                                  // задаем источником для генерации чисел нынешнее время в наносекундах
+						diff := new(big.Int).Sub(max, min)                                                         // вычисляем разницу между максимальным и минимальным числом
+						randomDiff := new(big.Int).Rand(source, diff)                                              // генерируем случайное число размером с разницу между мин и макс числами
+						randomNumber := new(big.Int).Add(randomDiff, min)                                          // добавляем к получившемуся числу минимальное, чтобы оно входило в диапозон
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, randomNumber.String())                  // отправляем полученный результат пользователю
+						b.bot.Send(msg)
+					}()
 				}
 			case "help":
-				b.help(update.Message)
+				go b.help(update.Message)
 			}
 		}
 	}
