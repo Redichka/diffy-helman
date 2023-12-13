@@ -202,7 +202,7 @@ func (b *Bot) chat(connect *Connect, updates tgbotapi.UpdatesChannel) error {
 						log.Println(message) // лог для имитации тайного считывания сообщений третьим лицом
 					}()
 				}
-			case "diffyHellmanCalculation":
+			case "diffycalc":
 				{
 					go func() {
 						numbers := strings.Fields(update.Message.CommandArguments()) // делим полученные аргументы команды
@@ -238,9 +238,12 @@ func (b *Bot) chat(connect *Connect, updates tgbotapi.UpdatesChannel) error {
 						b.bot.Send(msg)
 					}()
 				}
-			case "generateRandomNumber": // генератор случайного числа
+			case "genrannum": // генератор случайного числа
 				{
 					go func() {
+						if update.Message.CommandArguments() == "" {
+							return
+						}
 						arguments := strings.Fields(update.Message.CommandArguments()) // мы передаем 4 аргумента: первое число, степень первого числа, второе число, степень второго числа, делим их
 						numbers := []int{}                                             // создаем массив для хранения этих чисел
 						for _, num := range arguments {                                // перебираем все 4 числа и конвертируем в тип интеджер, добавляя в массив
